@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jingliao Village Interactive Board</title>
+    <style>
+        /* GLOBAL DESIGN */
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            background-color: #fdf5e6;
+            overflow: hidden; 
+            touch-action: none;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* COVER PAGE */
+        #home-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background-image: url('my_moving_bg.gif');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .welcome-title {
+	       margin-top: 160px;
+            font-size: 5.5rem;
+            color: white;
+            text-align: center;
+            text-shadow: -5px -5px 0 #000, 5px -5px 0 #000, -5px 5px 0 #000, 5px 5px 0 #000;
+            margin-bottom: 20px;
+            animation: pulseEffect 2s infinite alternate;
+        }
+
+        @keyframes pulseEffect { from { transform: scale(1); } to { transform: scale(1.04); } }
+
+        /* NAVIGATION BAR */
+        #main-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 90px;
+            background: #8d6e63;
+            padding: 10px;
+            justify-content: center;
+            gap: 20px;
+            z-index: 2000;
+            border-bottom: 6px solid #5d4037;
+        }
+
+        .nav-btn {
+            padding: 12px 25px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: white;
+            border: 3px solid black;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .nav-btn.active-tab {
+            background-color: #ff4757 !important;
+            color: white !important;
+            transform: scale(1.1);
+        }
+
+        /* MAIN BOARD SHAPE */
+        .white-board {
+            display: none;
+            margin-top: 110px;
+            width: 94vw;
+            height: 82vh;
+            background: white;
+            border: 8px solid #8d6e63;
+            border-radius: 40px;
+            padding: 25px;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .active-page { display: block !important; }
+
+        .header-text { font-size: 4rem; color: #4a90e2; margin: 10px 0; }
+        .header-clickable { cursor: pointer; display: inline-block; transition: transform 0.2s; }
+        .header-clickable:active { transform: scale(0.95); color: #ffa502; }
+        .sub-ch { font-size: 2rem; color: #7f8c8d; font-weight: bold; margin-bottom: 25px; }
+
+        /* PHOTO GRIDS */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        .static-card {
+            background: #fff;
+            border: 4px solid #8d6e63; /* Clear rectangle borders */
+            border-radius: 25px;
+            padding: 15px;
+        }
+        .static-card img { width: 100%; height: 180px; object-fit: contain; }
+
+        .item-card {
+            background: #fff;
+            border: 4px solid #eee;
+            border-radius: 25px;
+            padding: 15px;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .item-card:active {
+            background-color: #ffeaa7;
+            transform: scale(1.08);
+            border-color: #fdcb6e;
+        }
+        .item-card img { width: 100%; height: 160px; object-fit: contain; }
+        .item-card p { font-size: 1.8rem; font-weight: bold; margin: 10px 0 0 0; }
+
+        /* INTERACTIVE BUTTONS */
+        .start-btn {
+            padding: 25px 60px;
+            font-size: 2.5rem;
+            background: #ffcc00;
+            border: 5px solid black;
+            border-radius: 60px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .num-btn {
+            width: 110px; height: 110px; font-size: 3rem; border-radius: 50%;
+            border: 5px solid #f39c12; background: #f1c40f; color: white;
+            font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .num-btn:active { transform: scale(0.9); background: #e67e22; }
+
+        .score-pill {
+            display: inline-block; margin-top: 15px; padding: 12px 40px;
+            background: #1e90ff; color: white; border-radius: 25px;
+            font-size: 2rem; border: 4px solid black; font-weight: bold;
+        }
+
+        /* ACTIVITY 2 ROW DESIGN */
+        .matching-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .matching-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fdfdfd; border: 4px solid #cbd5e1; border-radius: 20px;
+            padding: 12px 30px;
+        }
+
+        .matching-row img { width: 90px; height: 90px; object-fit: contain; }
+        
+        .input-box-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+
+        .matching-row input {
+            font-size: 1.6rem; padding: 12px; width: 250px; 
+            border-radius: 12px; border: 3px solid #bdc3c7; text-align: center;
+            font-weight: bold;
+        }
+
+        .reveal-text {
+            font-size: 1.2rem; color: #7f8c8d; font-weight: bold; visibility: hidden;
+        }
+
+        /* DRAWING AREA (BIGGER SQUARE) */
+        #canvas-box { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        canvas {
+            background: #f1f2f6; border: 6px solid #8d6e63; border-radius: 25px;
+            width: 580px; height: 580px; /* Bigger focused square layout */
+            touch-action: none;
+        }
+        .draw-controls { display: flex; gap: 20px; }
+        .sq-btn {
+            width: 210px; padding: 15px 0; font-size: 1.6rem; font-weight: bold;
+            border: 4px solid black; border-radius: 20px; color: white; cursor: pointer;
+            text-align: center; transition: background-color 0.2s;
+        }
+
+        /* GRADING STYLE CHANGES */
+        .correct { background-color: #d4edda !important; border-color: #28a745 !important; }
+        .wrong { background-color: #f8d7da !important; border-color: #dc3545 !important; }
+
+    </style>
+</head>
+<body>
+
+    <div id="home-screen">
+        <h1 class="welcome-title">WELCOME TO JINGLIAO</h1>
+        <button class="start-btn" onclick="startApp()">START</button>
+    </div>
+
+    <div id="main-nav">
+        <button class="nav-btn" id="btn-old" onclick="go('old-house', 'btn-old')">Old House</button>
+        <button class="nav-btn" id="btn-prod" onclick="go('products', 'btn-prod')">Products</button>
+        <button class="nav-btn" id="btn-port" onclick="go('portal', 'btn-port')">Portal</button>
+        <button class="nav-btn" id="btn-draw" onclick="go('drawing', 'btn-draw')">Drawing</button>
+    </div>
+
+    <div id="old-house" class="white-board">
+        <h1 class="header-text"><span class="header-clickable" onclick="say('Old House')">OLD HOUSE 🔊</span></h1>
+        <p class="sub-ch">EXAMPLES OF OLD HOUSES IN JINGLIAO (菁寮老屋範例)</p>
+        <div class="grid">
+            <div class="static-card"><img src="house1.png"></div>
+            <div class="static-card"><img src="house2.png"></div>
+            <div class="static-card"><img src="house3.png"></div>
+            <div class="static-card"><img src="house4.png"></div>
+        </div>
+    </div>
+
+    <div id="products" class="white-board">
+        <h1 class="header-text">PRODUCTS</h1>
+        <p class="sub-ch">Click to listen pronunciation! (點擊聽發音)</p>
+        <div class="grid">
+            <div class="item-card" onclick="say('Ice Cream')"><img src="icecream.png"><p>Ice Cream</p></div>
+            <div class="item-card" onclick="say('Bread')"><img src="bread.png"><p>Bread</p></div>
+            <div class="item-card" onclick="say('Waffle')"><img src="waffle.png"><p>Waffle</p></div>
+            <div class="item-card" onclick="say('Rice Cracker')"><img src="rice_cracker.png"><p>Rice Cracker</p></div>
+            <div class="item-card" onclick="say('Soda')"><img src="soda.png"><p>Soda</p></div>
+            <div class="item-card" onclick="say('Bubble Gum')"><img src="bubble_gum.png"><p>Bubble Gum</p></div>
+            <div class="item-card" onclick="say('Candy')"><img src="candy.png"><p>Candy</p></div>
+        </div>
+    </div>
+
+    <div id="portal" class="white-board">
+        <h1 class="header-text">STUDENT PORTAL</h1>
+        <p class="sub-ch">選擇您的班級號碼</p>
+        <div style="display:flex; gap:25px; justify-content:center; margin-top:50px;">
+            <button class="num-btn" onclick="go('act1', 'btn-port')">1</button>
+            <button class="num-btn" onclick="go('act1', 'btn-port')">2</button>
+            <button class="num-btn" onclick="go('act1', 'btn-port')">3</button>
+            <button class="num-btn" onclick="go('act1', 'btn-port')">4</button>
+            <button class="num-btn" onclick="go('act1', 'btn-port')">5</button>
+        </div>
+    </div>
+
+    <div id="act1" class="white-board">
+        <h1 class="header-text" style="font-size: 3rem; color:#855eea;">Activity 1: Trip Recall</h1>
+        <p class="sub-ch" style="color:#2c3e50; font-size:1.6rem;">Tick the photo you have visited in Jingliao.<br>(勾選你去過的 菁寮景點。)</p>
+        <div class="grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="item-card" id="v1"><img src="visit1.png"><br><input type="checkbox" id="c1" style="scale:2.5; margin-top:15px;"></div>
+            <div class="item-card" id="v2"><img src="visit2.png"><br><input type="checkbox" id="c2" style="scale:2.5; margin-top:15px;"></div>
+            <div class="item-card" id="v3"><img src="visit3.png"><br><input type="checkbox" id="c3" style="scale:2.5; margin-top:15px;"></div>
+            <div class="item-card" id="v4"><img src="visit4.png"><br><input type="checkbox" id="c4" style="scale:2.5; margin-top:15px;"></div>
+            <div class="item-card" id="v5"><img src="visit5.png"><br><input type="checkbox" id="c5" style="scale:2.5; margin-top:15px;"></div>
+        </div>
+        <br><br>
+        <button class="start-btn" style="font-size:1.6rem;" onclick="grade1()">SUBMIT ACTIVITY</button>
+        <div id="score1" class="score-pill" style="display:none;"></div>
+        <button class="start-btn" style="background:#a55eea; color:white; font-size:1.6rem; margin-left:15px;" onclick="go('act2', 'btn-port')">Next Activity ➡️</button>
+    </div>
+
+    <div id="act2" class="white-board">
+        <h1 class="header-text" style="font-size: 3rem; color:#855eea;">Activity 2: Matching Products</h1>
+        <p class="sub-ch" style="color:#2c3e50; font-size:1.5rem; margin-bottom: 15px;">
+            <b>Word Bank:</b> Bread (麵包) | Soda (汽水) | Waffle (鬆餅) | Ice Cream (冰淇淋) | Rice Cracker (米果) | Bubble Gum (口香糖) | Candy (糖果)
+        </p>
+        
+        <div class="matching-container">
+            <div class="matching-row" id="r1"><img src="bread.png"><div class="input-box-wrap"><input type="text" id="m1" placeholder="Type English Word..."><span class="reveal-text" id="rev1">Ans: bread</span></div></div>
+            <div class="matching-row" id="r2"><img src="soda.png"><div class="input-box-wrap"><input type="text" id="m2"><span class="reveal-text" id="rev2">Ans: soda</span></div></div>
+            <div class="matching-row" id="r3"><img src="waffle.png"><div class="input-box-wrap"><input type="text" id="m3"><span class="reveal-text" id="rev3">Ans: waffle</span></div></div>
+            <div class="matching-row" id="r4"><img src="icecream.png"><div class="input-box-wrap"><input type="text" id="m4"><span class="reveal-text" id="rev4">Ans: ice cream</span></div></div>
+            <div class="matching-row" id="r5"><img src="rice_cracker.png"><div class="input-box-wrap"><input type="text" id="m5"><span class="reveal-text" id="rev5">Ans: rice cracker</span></div></div>
+            <div class="matching-row" id="r6"><img src="bubble_gum.png"><div class="input-box-wrap"><input type="text" id="m6"><span class="reveal-text" id="rev6">Ans: bubble gum</span></div></div>
+            <div class="matching-row" id="r7"><img src="candy.png"><div class="input-box-wrap"><input type="text" id="m7"><span class="reveal-text" id="rev7">Ans: candy</span></div></div>
+        </div>
+
+        <br>
+        <button class="start-btn" style="font-size:1.6rem;" onclick="grade2()">SUBMIT ACTIVITY</button>
+        <div id="score2" class="score-pill" style="display:none;"></div>
+    </div>
+
+    <div id="drawing" class="white-board">
+        <h1 class="header-text">Draw Jingliao</h1>
+        <p class="sub-ch">Use your finger to design! (使用手指進行繪圖設計)</p>
+        <div id="canvas-box">
+            <canvas id="villageCanvas"></canvas>
+            <div class="draw-controls">
+                <button class="sq-btn" id="eraser-btn" style="background:#ff7675;" onclick="toggleEraser()">ERASER<br>橡皮擦</button>
+                <button class="sq-btn" style="background:#4a90e2;" onclick="submitDrawing()">SUBMIT ACTIVITY<br>提交活動</button>
+                <button class="sq-btn" style="background:#55efc4;" onclick="location.reload()">FINISH<br>結束</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let canv, ctx, drawing = false;
+        let isEraserActive = false; // Tracks tool state
+
+        function startApp() {
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('main-nav').style.display = 'flex';
+            go('old-house', 'btn-old');
+        }
+
+        function go(pId, bId) {
+            document.querySelectorAll('.white-board').forEach(p => p.classList.remove('active-page'));
+            document.getElementById(pId).classList.add('active-page');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+            if(bId) document.getElementById(bId).classList.add('active-tab');
+            if(pId === 'drawing') initCanvas();
+        }
+
+        function say(t) {
+            window.speechSynthesis.cancel();
+            let m = new SpeechSynthesisUtterance(t);
+            m.lang = 'en-US';
+            window.speechSynthesis.speak(m);
+        }
+
+        // GRADING ACTIVITY 1
+        function grade1() {
+            let s = 0; const ans = [true, false, true, false, true];
+            for(let i=1; i<=5; i++) {
+                let check = document.getElementById('c'+i).checked;
+                let card = document.getElementById('v'+i);
+                if(check === ans[i-1]) { s++; card.className = 'item-card correct'; }
+                else card.className = 'item-card wrong';
+            }
+            let pill = document.getElementById('score1');
+            pill.style.display = 'inline-block';
+            pill.innerText = "SCORE: " + s + "/5";
+        }
+
+        // GRADING & REVEAL ACTIVITY 2
+        function grade2() {
+            let s = 0; 
+            const ans = ['bread', 'soda', 'waffle', 'ice cream', 'rice cracker', 'bubble gum', 'candy'];
+            for(let i=1; i<=7; i++) {
+                let val = document.getElementById('m'+i).value.toLowerCase().trim();
+                let row = document.getElementById('r'+i);
+                let rev = document.getElementById('rev'+i);
+                
+                // Unhide the target word block
+                rev.style.visibility = 'visible';
+
+                if(val === ans[i-1]) { 
+                    s++; 
+                    row.className = 'matching-row correct'; 
+                } else { 
+                    row.className = 'matching-row wrong'; 
+                }
+            }
+            let pill = document.getElementById('score2');
+            pill.style.display = 'inline-block';
+            pill.innerText = "SCORE: " + s + "/7";
+        }
+
+        // DRAWING SYSTEM
+        function initCanvas() {
+            canv = document.getElementById('villageCanvas');
+            ctx = canv.getContext('2d');
+            canv.width = 580; canv.height = 580; // Larger grid box setup
+            canv.addEventListener('touchstart', (e) => { drawing = true; paint(e); }, {passive: false});
+            canv.addEventListener('touchend', () => { drawing = false; ctx.beginPath(); });
+            canv.addEventListener('touchmove', paint, {passive: false});
+            
+            // Default reset if coming back to tab
+            isEraserActive = false;
+            updateEraserButtonUI();
+        }
+
+        function toggleEraser() {
+            isEraserActive = !isEraserActive;
+            updateEraserButtonUI();
+        }
+
+        function updateEraserButtonUI() {
+            const btn = document.getElementById('eraser-btn');
+            if (isEraserActive) {
+                btn.style.backgroundColor = '#636e72'; // Dark gray when running eraser mode
+                btn.innerHTML = 'PENCIL<br>鉛筆'; // Allow toggle back easily
+            } else {
+                btn.style.backgroundColor = '#ff7675'; // Soft red default color
+                btn.innerHTML = 'ERASER<br>橡皮擦';
+            }
+        }
+
+        function paint(e) {
+            if(!drawing) return; e.preventDefault();
+            let t = e.touches[0]; let r = canv.getBoundingClientRect();
+            
+            ctx.lineCap = 'round';
+            
+            if (isEraserActive) {
+                ctx.lineWidth = 30; // Thicker line for easier erasing
+                ctx.strokeStyle = '#f1f2f6'; // Match the exact canvas background color
+            } else {
+                ctx.lineWidth = 7; // Fine pencil line
+                ctx.strokeStyle = '#2d3436'; // Pencil black color
+            }
+
+            ctx.lineTo(t.clientX - r.left, t.clientY - r.top);
+            ctx.stroke(); ctx.beginPath();
+            ctx.moveTo(t.clientX - r.left, t.clientY - r.top);
+        }
+
+        function submitDrawing() { alert("Drawing submitted successfully! Great job!"); }
+    </script>
+</body>
+</html>
